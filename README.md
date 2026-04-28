@@ -39,8 +39,8 @@ Le projet repose sur une architecture moderne assurant sécurité et scalabilit�
 
 * **Backend** : Python 3.x, FastAPI
 * **Intelligence Artificielle** : LangChain, OpenAI GPT-4 / Mistral AI (RAG - Retrieval-Augmented Generation)
-* **Frontend** : React.js / Next.js
-* **Base de Données** : PostgreSQL / Pinecone (Vector Store)
+* **Frontend** : React.js
+* **Base de Données** : PostgreSQL
 * **Sécurité** : Chiffrement AES-256 pour les documents importés.
 
 ---
@@ -51,8 +51,7 @@ Le projet repose sur une architecture moderne assurant sécurité et scalabilit�
 │
 ├── /docs            # Business Plan, Analyse de Marché, Cahier des charges
 ├── /backend         # API et Logique IA (Python)
-├── /frontend        # Interface utilisateur (React/Next.js)
+├── /frontend        # Interface utilisateur (React.js)
 ├── /data            # Exemples de documents (anonymisés) pour tests
-├── .env.example     # Modèle des variables d'environnement
 ├── .gitignore       # Exclusion des fichiers sensibles
 └── README.md        # Documentation principale
