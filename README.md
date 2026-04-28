@@ -26,22 +26,29 @@ Dans un environnement où les contrats sont denses et souvent rédigés dans un 
 ---
 
 ## 🧠 Méthodologie IA & Modélisation
-En tant que projet de **Master en IA Appliquée**, LegalEase AI repose sur un pipeline d'ingénierie rigoureux garantissant la fiabilité des résultats et l'évitement des hallucinations.
+Pour garantir un niveau d'expertise Master, le projet repose sur deux piliers techniques :
 
 ### 1. Architecture RAG (Retrieval-Augmented Generation)
-Le cœur du système n'est pas une simple génération de texte, mais un système de récupération d'information contextuelle :
-* **Indexing** : Les codes juridiques (marocains et français) sont segmentés (*chunking*) et transformés en vecteurs via le modèle `multilingual-e5-large`.
-* **Retrieval** : Lors d'une requête, le système extrait les articles de loi les plus pertinents depuis une base vectorielle (**ChromaDB**).
-* **Generation** : Le LLM génère l'analyse en s'appuyant exclusivement sur les documents récupérés, garantissant une base légale réelle.
+Le modèle ne génère pas de réponses par "intuition" statistique. Il utilise un processus de récupération :
+* **Indexing** : Les codes de lois sont vectorisés avec `multilingual-e5-large`.
+* **Retrieval** : Extraction en temps réel des articles de loi pertinents depuis **ChromaDB**.
+* **Generation** : Le LLM (GPT-4 ou Mistral) synthétise l'analyse en se basant uniquement sur ces sources vérifiées.
 
-### 2. Fine-Tuning & Alignement Bilingue
-Pour traiter les nuances du droit en Arabe et en Français, nous explorons :
-* **Adaptation au domaine** : Fine-tuning de modèles Open-Source (**Mistral-7B** ou **Llama-3**) sur un corpus de contrats annotés (jurilinguistique).
-* **Instruction Tuning** : Optimisation des prompts pour l'extraction d'entités juridiques et la simplification de termes complexes.
+### 2. Fine-Tuning & Traitement NLP
+* **Fine-Tuning** : Optimisation de modèles (Llama-3/Mistral) sur la structure des contrats (NDA, Baux).
+* **Normalisation** : Pipeline de traitement de l'Arabe juridique et OCR pour les documents scannés.
 
-### 3. Pipeline NLP & Prétraitement
-* **OCR & Clean-up** : Nettoyage des documents PDF scannés et normalisation du texte pour éliminer le bruit de numérisation.
-* **Analyse Sémantique** : Utilisation de techniques de *Cross-lingual Embeddings* pour assurer la cohérence entre les concepts juridiques dans les deux langues.
+---
+
+## 📊 Stratégie de Données (Data Purpose)
+La section `/data` de ce projet n'est pas un simple stockage, elle constitue le "carburant" de l'intelligence du système :
+
+| Catégorie de fichiers | Rôle & Utilité Technique | Objectif Final |
+| :--- | :--- | :--- |
+| **Codes Officiels (DOC, Commerce)** | Base de connaissances pour le RAG. | **Éliminer les hallucinations** en ancrant l'IA dans la loi réelle. |
+| **Modèles de Contrats (NDA, Travail)** | Dataset pour le Fine-Tuning. | Apprendre à l'IA à **identifier les structures** contractuelles complexes. |
+| **Paires de Simplification** | Dataset d'entraînement "Input/Output". | Apprendre à l'IA à **vulgariser le jargon** sans perdre le sens juridique. |
+| **Documents Scannés (OCR)** | Données de test "Raw". | Garantir la **robustesse du pipeline** face à des documents de mauvaise qualité. |
 
 ---
 
