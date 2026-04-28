@@ -37,7 +37,7 @@ Dans un environnement où les contrats sont denses et souvent rédigés dans un 
 ## 💻 Stack Technique
 Le projet repose sur une architecture moderne assurant sécurité et scalabilité :
 
-* **Backend** : Python 3.x, FastAPI
+* **Backend** : Python 3.9, FastAPI
 * **Intelligence Artificielle** : LangChain, OpenAI GPT-4 / Mistral AI (RAG - Retrieval-Augmented Generation)
 * **Frontend** : React.js
 * **Base de Données** : PostgreSQL
