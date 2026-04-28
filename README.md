@@ -25,6 +25,26 @@ Dans un environnement où les contrats sont denses et souvent rédigés dans un 
 
 ---
 
+## 🧠 Méthodologie IA & Modélisation
+En tant que projet de **Master en IA Appliquée**, LegalEase AI repose sur un pipeline d'ingénierie rigoureux garantissant la fiabilité des résultats et l'évitement des hallucinations.
+
+### 1. Architecture RAG (Retrieval-Augmented Generation)
+Le cœur du système n'est pas une simple génération de texte, mais un système de récupération d'information contextuelle :
+* **Indexing** : Les codes juridiques (marocains et français) sont segmentés (*chunking*) et transformés en vecteurs via le modèle `multilingual-e5-large`.
+* **Retrieval** : Lors d'une requête, le système extrait les articles de loi les plus pertinents depuis une base vectorielle (**ChromaDB**).
+* **Generation** : Le LLM génère l'analyse en s'appuyant exclusivement sur les documents récupérés, garantissant une base légale réelle.
+
+### 2. Fine-Tuning & Alignement Bilingue
+Pour traiter les nuances du droit en Arabe et en Français, nous explorons :
+* **Adaptation au domaine** : Fine-tuning de modèles Open-Source (**Mistral-7B** ou **Llama-3**) sur un corpus de contrats annotés (jurilinguistique).
+* **Instruction Tuning** : Optimisation des prompts pour l'extraction d'entités juridiques et la simplification de termes complexes.
+
+### 3. Pipeline NLP & Prétraitement
+* **OCR & Clean-up** : Nettoyage des documents PDF scannés et normalisation du texte pour éliminer le bruit de numérisation.
+* **Analyse Sémantique** : Utilisation de techniques de *Cross-lingual Embeddings* pour assurer la cohérence entre les concepts juridiques dans les deux langues.
+
+---
+
 ## ✨ Fonctionnalités Clés
 - 📝 **Résumé Automatique** : Synthèse claire des points essentiels d'un contrat.
 - 🔍 **Détection de Clauses à Risque** : Identification des points de vigilance (pénalités, clauses abusives).
@@ -49,7 +69,7 @@ Le projet repose sur une architecture moderne assurant sécurité et scalabilit�
 ```text
 /LegalEaseAI
 │
-├── /docs            # Business Plan, Analyse de Marché, Cahier des charges
+├── /docs            # Business Plan, Analyse de Marché
 ├── /backend         # API et Logique IA (Python)
 ├── /frontend        # Interface utilisateur (React.js)
 ├── /data            # Exemples de documents (anonymisés) pour tests
