@@ -3,3 +3,16 @@
     letter-spacing: 4px;
     text-align: center;
 }
+
+.ConversationItem {
+
+    button {
+        opacity: 0%;
+        transition: all 300ms ease-in-out;
+    }
+    
+    &:hover button {
+        opacity: 100%;
+        transition: all 300ms ease-in-out;
+    }
+}
