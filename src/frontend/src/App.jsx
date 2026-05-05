@@ -1,15 +1,14 @@
-import { useState } from 'react'
 import './App.css'
 import Landing from './pages/auth/Landing'
-import {BrowserRouter, Routes, Route} from 'react-router-dom'
+import Conversation from './pages/site/Conversation'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/signin" element={<Landing />} />
-        <Route path="/test" element={<Landing />} />
+        <Route path="/conversation" element={<Conversation />} />
       </Routes>
     </BrowserRouter>
   )

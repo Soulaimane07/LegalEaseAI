@@ -1,10 +1,8 @@
 import NavbarLanding from '../../components/Navbar/NavbarLanding'
 import { Footer } from '../../components/FooterCTA'
-import Hero from '../../components/Hero'
-import Features from '../../components/Features'
-import Modes from '../../components/Modes'
-import Pricing from '../../components/Pricing'
-import SoundAssist from '../../components/SoundAssist'
+import Hero from '../../components/Landing/Hero'
+import Pricing from '../../components/Landing/Pricing'
+import SoundAssist from '../../components/Landing/SoundAssist'
 
 function Landing() {
   return (
@@ -14,8 +12,6 @@ function Landing() {
 
         <main>
             <Hero />
-            {/* <Features /> */}
-            {/* <Modes /> */}
             <Pricing />
             <SoundAssist />
         </main>
