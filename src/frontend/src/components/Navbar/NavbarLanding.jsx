@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { auth, googleProvider } from "./firebase"; 
 import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { useNavigate } from 'react-router-dom';
+import User from './User';
 
 export default function NavbarLanding() {
   const [user, setUser] = useState(null) // Tracks the authenticated user
@@ -10,32 +12,7 @@ export default function NavbarLanding() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // Listen for authentication changes globally
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe(); // Clean up subscription on unmount
-  }, []);
-
-  const handleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log("Logged in user:", result.user);
-    } catch (error) {
-      console.error("Login Error:", error.message);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setOpen(false); // Close the profile dropdown on logout
-      console.log("User signed out");
-    } catch (error) {
-      console.error("Logout Error:", error.message);
-    }
-  };
+  
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -55,6 +32,48 @@ export default function NavbarLanding() {
   }, [lastScrollY])
 
   const links = ['Features', 'Use cases', 'Pricing', 'Ressources']
+
+
+
+
+
+
+
+  const navigate = useNavigate();
+  
+    // Listen for authentication changes globally
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+      });
+      return () => unsubscribe(); // Clean up subscription on unmount
+    }, []);
+  
+    const handleLogin = async () => {
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log("Logged in user:", result.user);
+        navigate('/conversation/'+result.user.uid); // Navigate to dashboard after login
+      } catch (error) {
+        console.error("Login Error:", error.message);
+      }
+    };
+  
+    const handleLogout = async () => {
+      try {
+        await signOut(auth);
+        setOpen(false); // Close the profile dropdown on logout
+        console.log("User signed out");
+      } catch (error) {
+        console.error("Logout Error:", error.message);
+      }
+    };
+
+
+
+
+
+
 
   return (
     <nav 
@@ -85,62 +104,14 @@ export default function NavbarLanding() {
         
         {/* Actions Layout (Desktop) */}
         <div className="hidden md:flex items-center gap-3">
-          {user ? (
-            /* User Profile & Sign Out Display */
-            <button onClick={()=> setOpen(!open)} className="flex cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all  items-center p-0.5 rounded-full">
-              <img 
-                src={user.photoURL || "../images/default-avatar.png"} 
-                alt="Profile" 
-                className="h-9 w-9 rounded-full border border-gray-200"
-                referrerPolicy="no-referrer" // Prevents Google image loading restrictions
-              />
-
-              {/*  */}
-            </button>
-          ) : (
-            /* Authentication Call to Actions */
-            <>
-              <button 
-                onClick={handleLogin} 
-                className="btn-ghost cursor-pointer bg-gray-100 text-gray-900 font-medium rounded-full text-sm py-2 px-6 hover:bg-gray-200 transition-colors"
-              >
-                Sign in
-              </button>
-              
-              <button 
-                onClick={handleLogin}
-                className="btn-primary cursor-pointer bg-black text-white rounded-full text-sm font-medium px-6 py-2 transition-transform active:scale-95"
-              >
-                Start for Free
-              </button>
-            </>
-          )}
+          <User
+              user={user} 
+              open={open} 
+              setOpen={setOpen} 
+              handleLogin={handleLogin} 
+              handleLogout={handleLogout} 
+          />
         </div>
-
-        {(user && open) && (
-          <div className="flex flex-col items-center gap-3 absolute top-12 right-20 bg-white border border-gray-200 rounded-2xl p-4  shadow-lg">
-            {/* User Profile Display */}
-            <div className="flex flex-col gap-3 px-4 py-2">
-              <p className="text-xs text-gray-500 text-center font-medium">  {user.email}</p>
-              <img 
-                src={user.photoURL || "../images/default-avatar.png"} 
-                alt="Profile" 
-                className="h-20 mx-auto w-20 rounded-full border border-gray-200"
-                referrerPolicy="no-referrer"
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-900 text-center"> Hi, {user.displayName || "User"}! </p>
-                
-              </div>
-              <button 
-                onClick={handleLogout}
-                className="text-xs font-medium text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition-colors ml-2 cursor-pointer"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Mobile hamburger button layout */}
         <button

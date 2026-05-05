@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import Sidebar from '../../components/Conversation/Sidebar'
+import { Footer } from '../../components/FooterCTA'
+import Navbar from '../../components/Navbar/Navbar'
+import StartConversation from '../../components/Conversation/StartConversation'
 
 const initialMessages = [
   {
@@ -10,6 +14,9 @@ const initialMessages = [
 export default function Conversation() {
   const [messages, setMessages] = useState(initialMessages)
   const [draft, setDraft] = useState('')
+
+  const [user, setUser] = useState(null)
+
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -28,44 +35,18 @@ export default function Conversation() {
   }
 
   return (
-    <div className="min-h-screen bg-bg  px-4 py-16">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <div className="space-y-3">
-          <p className="text-sm uppercase tracking-[0.3em] text-google-blue/70">Conversation</p>
-          <h1 className="text-4xl font-semibold">Simple legal assistant chat</h1>
-          <p className="text-base text-muted">Type a question and get a short legal answer from LegalEase AI.</p>
-        </div>
+    <div>
+      <Navbar setUserr={setUser} />
 
-        <div className="space-y-4 rounded-3xl border border-white/10 bg-surface2/80 p-5">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`rounded-3xl p-4 ${
-                message.role === 'assistant'
-                  ? 'bg-surface/90 text-white'
-                  : 'bg-google-blue/10 text-white'
-              }`}
-            >
-              <div className="text-xs uppercase tracking-[0.25em] text-white/50 mb-2">
-                {message.role === 'assistant' ? 'LegalEase AI' : 'You'}
-              </div>
-              <p className="text-sm leading-7">{message.text}</p>
-            </div>
-          ))}
+      <div className="h-screen bg-gray-100/50 items-stretch flex bg-bg  px-20 py-16 gap-12">
+        <Sidebar />
+        
+        <div className="w-full mx-auto space-y-8 flex flex-col items-center justify-center">
+          <StartConversation user={user} />
         </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-surface2/80 p-4">
-          <textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Type your legal question here..."
-            className="min-h-[120px] w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-google-blue/30"
-          />
-          <button type="submit" className="btn-primary rounded-full px-6 py-3 self-end">
-            Send
-          </button>
-        </form>
       </div>
+
+      <Footer />
     </div>
   )
 }

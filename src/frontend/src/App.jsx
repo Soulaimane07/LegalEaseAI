@@ -8,7 +8,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/conversation" element={<Conversation />} />
+        <Route path="/conversation/:userId" element={<Conversation />} />
       </Routes>
     </BrowserRouter>
   )
