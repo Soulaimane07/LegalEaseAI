@@ -45,8 +45,6 @@ export default function Conversation() {
           <StartConversation user={user} />
         </div>
       </div>
-
-      <Footer />
     </div>
   )
 }

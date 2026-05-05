@@ -1,81 +1,149 @@
 import os
+import datetime
+from typing import List
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+import firebase_admin
+from firebase_admin import credentials, firestore, auth
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
-from pydantic import BaseModel
-from typing import Optional
 
-app = FastAPI(
-    title="LegalEase AI Backend (Pure FastAPI)",
-    version="1.0.0"
-)
+# --- INITIALIZE FIREBASE ADMIN ENGINE ---
+cred_path = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
 
-# Configure CORS for your development domains
-origins = [
-    "http://localhost:5173",
-    "https://silver-fiesta-p5x6gpxv5w9c7p9r-5173.app.github.dev", 
-]
+if not firebase_admin._apps:
+    cred = credentials.Certificate(cred_path)
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+
+app = FastAPI(title="LegalEase AI - Firestore Engine")
+security = HTTPBearer()
+
+# --- CORS MIDDLEWARE ---
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
 
-security = HTTPBearer()
+# --- PYDANTIC SCHEMAS ---
+class MessageModel(BaseModel):
+    role: str = Field(..., description="'user' or 'assistant'")
+    content: str
+    timestamp: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
-# Replace this with your Google Client ID (found in your Google Cloud Console / Firebase config)
-# It usually ends with .apps.googleusercontent.com
-GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID"
+class ConversationCreate(BaseModel):
+    title: str = Field(default="New Legal Consultation")
 
-class UserProfile(BaseModel):
-    uid: str
-    email: Optional[str] = None
-    name: Optional[str] = None
-    picture: Optional[str] = None
-
-# Authentication Gate: Verifies Google Identity Tokens directly
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> UserProfile:
+# --- AUTH DEPENDENCY (THE GATEKEEPER) ---
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    """Extracts and verifies the Firebase ID token from the Authorization header."""
     token = credentials.credentials
     try:
-        # Verify the token against Google's public key infrastructure
-        id_info = id_token.verify_oauth2_token(
-            token, 
-            google_requests.Request(), 
-            GOOGLE_CLIENT_ID
-        )
-
-        # Ensure the token issuer is Google
-        if id_info['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
-            raise ValueError('Wrong issuer.')
-
-        # Return clean user information
-        return UserProfile(
-            uid=id_info.get("sub"), # 'sub' is the unique Google User ID
-            email=id_info.get("email"),
-            name=id_info.get("name"),
-            picture=id_info.get("picture")
-        )
+        decoded_token = auth.verify_id_token(token)
+        return decoded_token.get("uid")
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid backend authorization: {str(e)}",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail=f"Invalid Authorization Token: {str(e)}"
         )
 
-# --- ENDPOINTS ---
+# --- SECURE FIRESTORE ENDPOINTS ---
 
-@app.get("/")
-async def root():
-    return {"message": "LegalEase AI Engine Online"}
 
-@app.get("/api/protected-data", response_model=UserProfile)
-async def get_secure_dashboard_data(current_user: UserProfile = Depends(get_current_user)):
-    """
-    Locked down endpoint. Only accessible with a valid Google login token from React.
-    """
-    return current_user
+@app.post("/api/chat/new")
+async def create_conversation(
+    payload: ConversationCreate, 
+    user_id: str = Depends(get_current_user_id)
+):
+    """Creates a secure conversation document mapped directly to the verified user account."""
+    conversation_data = {
+        "user_id": user_id, 
+        "title": payload.title,
+        "created_at": datetime.datetime.utcnow(),
+        "messages": [] 
+    }
+    
+    _, doc_ref = db.collection("conversations").add(conversation_data)
+    return {"conversation_id": doc_ref.id, "status": "created"}
+
+
+@app.post("/api/chat/{conversation_id}/message")
+async def append_message(
+    conversation_id: str,
+    message: MessageModel,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Safely appends a message bubble directly inside the Firestore Document array."""
+    doc_ref = db.collection("conversations").document(conversation_id)
+    doc = doc_ref.get()
+    
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Conversation thread not found")
+        
+    if doc.to_dict().get("user_id") != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access to this chat session")
+
+    serialized_message = {
+        "role": message.role,
+        "content": message.content,
+        "timestamp": message.timestamp
+    }
+
+    doc_ref.update({
+        "messages": firestore.ArrayUnion([serialized_message])
+    })
+    return {"status": "success"}
+
+
+@app.get("/api/chat/{conversation_id}")
+async def get_conversation_history(
+    conversation_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Retrieves all data and complete message list from a protected Firestore document."""
+    doc_ref = db.collection("conversations").document(conversation_id)
+    doc = doc_ref.get()
+    
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Conversation history not found")
+        
+    data = doc.to_dict()
+    if data.get("user_id") != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+        
+    return data
+
+
+@app.get("/api/chats/all", response_model=List[dict])
+async def get_all_global_chats():
+    """Retrieves every chat session from the database globally without authentication."""
+    try:
+        chats_ref = db.collection("conversations").order_by(
+            "created_at", direction=firestore.Query.DESCENDING
+        )
+        docs = chats_ref.stream()
+        
+        all_chats = []
+        for doc in docs:
+            data = doc.to_dict()
+            chat_summary = {
+                "id": doc.id,
+                "user_id": data.get("user_id"), 
+                "title": data.get("title", "Global Conversation"),
+                "created_at": data.get("created_at"),
+                "messages": data.get("messages", []) 
+            }
+            all_chats.append(chat_summary)
+            
+        return all_chats
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch global database records: {str(e)}"
+        )
