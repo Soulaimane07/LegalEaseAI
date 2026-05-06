@@ -83,7 +83,7 @@ function Conversation({ data, refreshChat }) {
       </header>
 
       {/* Messages Scrollable Container */}
-      <div className='flex-1 overflow-y-auto px-6 py-1 space-y-1 custom-scrollbar pb-32'>
+      <div className='flex-1 overflow-y-auto px-6 py-1 space-y-3 custom-scrollbar pb-32'>
         {data.messages?.map((message, index) => {
           const isUser = message.role === 'user';
           
@@ -111,7 +111,7 @@ function Conversation({ data, refreshChat }) {
               <div className={`py-2 rounded-2xl text-[15px] leading-relaxed 
                 ${isUser 
                   ? 'bg-gray-950 px-4 text-white shadow-sm' 
-                  : 'bg-gray-50 px-4 text-gray-800'
+                  : 'bg-gray-50 px-1 text-gray-800'
                 }`}
               >
                 <p className="whitespace-pre-line">{message.content}</p>

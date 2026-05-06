@@ -134,40 +134,11 @@ function ParticleCanvas() {
   )
 }
 
-/* Orbiting element */
-function OrbitingDot({ color, delay, radius, duration }) {
-  return (
-    <div
-      className="absolute top-1/2 left-1/2 w-2.5 h-2.5 rounded-full"
-      style={{
-        background: color,
-        boxShadow: `0 0 12px ${color}`,
-        animation: `orbit ${duration}s linear infinite`,
-        animationDelay: delay,
-        '--orbit-radius': `${radius}px`,
-        transformOrigin: `-${radius}px 50%`,
-        marginLeft: `-${radius + 5}px`,
-        marginTop: '-5px',
-      }}
-    />
-  )
-}
 
-/* Floating code badge */
-function FloatingBadge({ children, className, delay }) {
-  return (
-    <div
-      className={`floating-badge animate-float animation-fill-both ${className}`}
-      style={{ animationDelay: delay }}
-    >
-      {children}
-    </div>
-  )
-}
 
 export default function Hero() {
   const [isTypingDone, setIsTypingDone] = useState(false);
-  const fullTitle = "Experience liftoff with the next-gen agent platform";
+  const fullTitle = "Accelerate your counsel with next-gen agent intelligence.";
   
   const typedTitle = useTypewriter(fullTitle, 35, 500, () => {
     setIsTypingDone(true);
