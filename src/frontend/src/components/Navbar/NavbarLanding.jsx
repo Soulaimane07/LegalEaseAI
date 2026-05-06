@@ -3,16 +3,19 @@ import { auth, googleProvider } from "./firebase";
 import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 import User from './User';
+import NavbarLandingDetails from './NavbarLandingDetails';
+import { TfiAngleDown } from "react-icons/tfi";
 
 export default function NavbarLanding() {
-  const [user, setUser] = useState(null) // Tracks the authenticated user
-  const [open, setOpen] = useState(false) // Tracks the authenticated user
+  const [user, setUser] = useState(null)
+  const [open, setOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  
+  // Track the string title of the hovered item: 'Use cases', 'Ressources', or null
+  const [activeDropdown, setActiveDropdown] = useState(null)
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -31,62 +34,64 @@ export default function NavbarLanding() {
     return () => window.removeEventListener('scroll', controlNavbar)
   }, [lastScrollY])
 
-  const links = ['Features', 'Use cases', 'Pricing', 'Ressources']
-
-
-
-
-
-
+  const links = [
+    {
+      "title": "Use cases",
+      "icon": true,
+      "hasDropdown": true,
+      "link": "/usecases"
+    },
+    {
+      "title": "Pricing",
+      "link": "#pricing"
+    },
+    {
+      "title": "Ressources",
+      "icon": true,
+      "hasDropdown": true, // Added flag here as well
+      "link": "/ressources"
+    }
+  ]
 
   const navigate = useNavigate();
   
-    // Listen for authentication changes globally
-    useEffect(() => {
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-      });
-      return () => unsubscribe(); // Clean up subscription on unmount
-    }, []);
-  
-    const handleLogin = async () => {
-      try {
-        const result = await signInWithPopup(auth, googleProvider);
-        console.log("Logged in user:", result.user);
-        navigate('/conversation/'+result.user.uid); // Navigate to dashboard after login
-      } catch (error) {
-        console.error("Login Error:", error.message);
-      }
-    };
-  
-    const handleLogout = async () => {
-      try {
-        await signOut(auth);
-        setOpen(false); // Close the profile dropdown on logout
-        console.log("User signed out");
-      } catch (error) {
-        console.error("Logout Error:", error.message);
-      }
-    };
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
+  const handleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      navigate('/conversation/'+result.user.uid); 
+    } catch (error) {
+      console.error("Login Error:", error.message);
+    }
+  };
 
-
-
-
-
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setOpen(false); 
+    } catch (error) {
+      console.error("Logout Error:", error.message);
+    }
+  };
 
   return (
     <nav 
-      className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-transform hover:bg-white duration-500 ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${
-        scrolled ? 'bg-white/80 backdrop-blur-xl ' : 'bg-transparent'
+        scrolled || activeDropdown ? 'bg-white/80 backdrop-blur-xl ' : 'bg-transparent'
       }`}
     >
-      <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
+      <div className="max-w-6xl relative mx-auto px-6 h-12 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <a href="#" className='flex items-center gap-2'>
+          <a href="/" className='flex items-center gap-2'>
             <img src='../images/logo.png' className="h-8 w-8" alt="logo" />
             <span className="font-medium tracking-tight text-gray-900">
               LegalEase AI<span className="text-blue-500">.</span>
@@ -94,15 +99,26 @@ export default function NavbarLanding() {
           </a>
 
           <ul className="hidden ml-10 font-semibold md:flex items-center text-xl">
-            {links.map(l => (
-              <li key={l}>
-                <a href={`#${l}`} className="nav-link hover:bg-gray-100/80 px-6 py-2 rounded-full text-gray-600">{l}</a>
+            {links.map((l, index) => (
+              <li 
+                key={index}
+                // Set the specific title string on hover entry
+                onMouseEnter={() => l.hasDropdown && setActiveDropdown(l.title)}
+                onMouseLeave={() => l.hasDropdown && setActiveDropdown(null)}
+                className="relative py-2" 
+              >
+                <a href={l.link} className="nav-link flex items-center gap-2 hover:bg-gray-100/80 px-6 py-2 rounded-full text-gray-600">
+                  {l.title}
+                  <i className={`transition-transform duration-300 inline-block ${activeDropdown === l.title ? 'rotate-180' : ''}`}> 
+                    {l.icon && <TfiAngleDown />} 
+                  </i>
+                </a>
               </li>
             ))}
           </ul>
         </div>
-        
-        {/* Actions Layout (Desktop) */}
+
+        {/* Actions Layout */}
         <div className="hidden md:flex items-center gap-3">
           <User
               user={user} 
@@ -113,7 +129,7 @@ export default function NavbarLanding() {
           />
         </div>
 
-        {/* Mobile hamburger button layout */}
+        {/* Mobile menu toggle */}
         <button
           className="md:hidden text-gray-600 hover:text-blue-600 transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -127,10 +143,23 @@ export default function NavbarLanding() {
         </button>
       </div>
 
+      {/* Dynamic Dropdown Container */}
+      <div 
+        onMouseEnter={() => setActiveDropdown(activeDropdown)}
+        onMouseLeave={() => setActiveDropdown(null)}
+        className={`absolute rounded-b-2xl top-full left-0 right-0 bg-white border-t border-gray-100 shadow-xl transition-all duration-300 origin-top ${
+          activeDropdown 
+            ? 'opacity-100 scale-y-100 visible' 
+            : 'opacity-0 scale-y-95 invisible pointer-events-none'
+        }`}
+      >
+          <NavbarLandingDetails activeType={activeDropdown} />
+      </div>
+
       {/* Mobile menu container details */}
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 px-6 py-4 flex flex-col gap-4">
-          {links.map(l => <a key={l} href="#" className="nav-link text-base text-gray-600">{l}</a>)}
+          {links.map((l, index) => <a key={index} href={l.link} className="nav-link text-base text-gray-600">{l.title}</a>)}
           
           <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
             {user ? (

@@ -193,7 +193,7 @@ export default function Hero() {
         <h1 className="text-5xl mb-20 font-semibold md:text-6xl font-display font-light leading-[1.05] tracking-tight mb-6 min-h-[120px]">
           {typedTitle}
           {!isTypingDone && (
-            <span className="inline-block w-1 h-10 md:h-12 ml-1 bg-blue-500 animate-pulse align-middle" />
+            <span className="inline-block w-[4px] h-[3rem] align-middle ml-2 animate-pulse bg-gradient-to-b from-blue-500 via-yellow-500 to-orange-500 rounded-full" />
           )}
         </h1>
 

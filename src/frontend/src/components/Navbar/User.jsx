@@ -2,7 +2,7 @@ import React from 'react'
 
 function User({ user, open, setOpen, handleLogin, handleLogout }) {
   return (
-    <div className=' space-x-2 relative flex items-center'>
+    <div className='gap-2 relative flex items-center'>
         {user ? (
             /* User Profile & Sign Out Display */
             <button onClick={()=> setOpen(!open)} className="flex cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all  items-center p-0.5 rounded-full">

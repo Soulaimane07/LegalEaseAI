@@ -40,26 +40,22 @@ function Conversation({ data }) {
       </header>
 
       {/* Messages Scrollable Container */}
-      <div className='flex-1 overflow-y-auto px-6 py-6 space-y-6 custom-scrollbar pb-32'>
+      <div className='flex-1 overflow-y-auto px-6 py-6 space-y-3 custom-scrollbar pb-32'>
         {data.chat?.map((message, index) => {
           const isUser = message.role === 'user';
           
           return (
             <div 
               key={index} 
-              className={`flex items-start gap-3 max-w-2xl transition-all duration-200 ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+              className={`flex items-start gap-3  max-w-2xl transition-all duration-200 ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
             >
               {/* Avatar Handling */}
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm border border-gray-100
-                ${isUser ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-700'}`}
-              >
-                {isUser ? (
-                  <LuUser size={16} />
-                ) : (
+              <div>
+                {!isUser && (
                   <img 
                     src="/images/logo.png" 
                     alt="AI" 
-                    className='w-5 h-5 object-contain'
+                    className='w-6 h-6 mt-2.5'
                     onError={(e) => {
                       // Fallback icon if image fails to load
                       e.target.style.display = 'none';
@@ -70,10 +66,10 @@ function Conversation({ data }) {
               </div>
 
               {/* Chat Bubble */}
-              <div className={`px-4 py-2.5 rounded-2xl text-[15px] leading-relaxed shadow-sm
+              <div className={`py-2.5 rounded-2xl text-[15px] leading-relaxed 
                 ${isUser 
-                  ? 'bg-gray-950 text-white rounded-tr-none' 
-                  : 'bg-gray-100/80 text-gray-800 rounded-tl-none border border-gray-200/30'
+                  ? 'bg-gray-950 px-4 text-white  shadow-sm' 
+                  : 'bg-gray-100/0 '
                 }`}
               >
                 <p className="whitespace-pre-line">{message.text}</p>

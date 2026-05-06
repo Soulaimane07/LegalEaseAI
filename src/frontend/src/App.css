@@ -16,3 +16,42 @@
         transition: all 300ms ease-in-out;
     }
 }
+
+
+.NavItem {
+    transition: all 300ms ease-in-out; 
+
+    p {
+        margin-right: 8px; 
+        transition: margin-right 300ms ease-in-out;
+
+        &::after {
+            margin-left: 0; 
+            transition: margin-left 300ms ease-in-out;
+        }
+    }
+
+    &:hover {
+        p {
+            margin-right: 20px;
+
+            &::after {
+                margin-left: 5px;
+            }
+        }
+    }
+}
+
+
+.nav-link {
+    i {
+        transition: rotate 300ms ease-in-out; 
+        rotate: 0deg; 
+    }
+
+    &:hover {
+        i {
+            rotate: 180deg; 
+        }
+    }
+}
