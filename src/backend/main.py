@@ -40,6 +40,10 @@ class MessageModel(BaseModel):
 class ConversationCreate(BaseModel):
     title: str = Field(default="New Legal Consultation")
 
+# Added Schema for handling Title Updates
+class ConversationUpdate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=100, description="The new custom title for the chat session")
+
 # --- AUTH DEPENDENCY (THE GATEKEEPER) ---
 async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
     """Extracts and verifies the Firebase ID token from the Authorization header."""
@@ -54,7 +58,6 @@ async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depend
         )
 
 # --- SECURE FIRESTORE ENDPOINTS ---
-
 
 @app.post("/api/chat/new")
 async def create_conversation(
@@ -118,6 +121,45 @@ async def get_conversation_history(
         raise HTTPException(status_code=403, detail="Access denied")
         
     return data
+
+
+@app.patch("/api/chat/{conversation_id}")
+async def rename_conversation(
+    conversation_id: str,
+    payload: ConversationUpdate,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Updates the title field of a conversation if the requester owns the document."""
+    doc_ref = db.collection("conversations").document(conversation_id)
+    doc = doc_ref.get()
+
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Conversation thread not found")
+
+    if doc.to_dict().get("user_id") != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized modification request")
+
+    doc_ref.update({"title": payload.title})
+    return {"status": "updated", "new_title": payload.title}
+
+
+@app.delete("/api/chat/{conversation_id}")
+async def delete_conversation(
+    conversation_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Permanently deletes a conversation log from Firestore if the requester owns it."""
+    doc_ref = db.collection("conversations").document(conversation_id)
+    doc = doc_ref.get()
+
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Conversation thread not found")
+
+    if doc.to_dict().get("user_id") != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized deletion request")
+
+    doc_ref.delete()
+    return {"status": "deleted", "conversation_id": conversation_id}
 
 
 @app.get("/api/chats/all", response_model=List[dict])

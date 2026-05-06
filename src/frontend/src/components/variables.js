@@ -1,0 +1,1 @@
+export const API_BASE_URL = "https://silver-fiesta-p5x6gpxv5w9c7p9r-8000.app.github.dev/api"

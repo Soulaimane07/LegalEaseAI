@@ -1,24 +1,67 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import SearchBox from '../SearchBox/SearchBox';
-import { LuBot, LuUser } from "react-icons/lu"; // Accessible fallback avatars
+import { LuBot } from "react-icons/lu";
+import { auth } from './firebase'; // Ensure correct path to your frontend firebase instance
+import { API_BASE_URL } from '../../variables'; // Ensure correct path to your global variables file
 
-function Conversation({ data }) {
+function Conversation({ data, refreshChat }) {
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to the bottom whenever data or chat history updates
+  // Auto-scroll to the bottom whenever message history updates
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    if (data?.chat) {
+    if (data?.messages) {
       scrollToBottom();
     }
-  }, [data?.chat]);
+  }, [data?.messages]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("add to chat");
+  // Handles sending ongoing replies within this active conversation session
+  const handleSubmit = async (e, textContent) => {
+    if (!textContent || textContent.trim() === "") return;
+    
+    setSending(true);
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        alert("Please sign in to continue this consultation.");
+        return;
+      }
+
+      // 1. Fetch fresh authorization JWT token from Firebase auth context
+      const token = await currentUser.getIdToken(true);
+      
+      const messagePayload = {
+        role: "user",
+        content: textContent.trim(),
+        timestamp: new Date().toISOString()
+      };
+
+      // 2. Dispatch request to append a new message bubble to the existing Firestore document
+      const response = await fetch(`${API_BASE_URL}/chat/${data?.id}/message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(messagePayload)
+      });
+
+      if (!response.ok) throw new Error("Failed to append message to the session server.");
+
+      // 3. Trigger parent history refresh callback to pull the updated document data down
+      if (refreshChat) {
+        await refreshChat();
+      }
+
+    } catch (error) {
+      console.error("Failed to append message bubble:", error);
+    } finally {
+      setSending(false);
+    }
   };
 
   // Safe fallback if data is null/empty when switching chats or starting a new one
@@ -32,22 +75,22 @@ function Conversation({ data }) {
   }
 
   return (
-    <div className='flex-1 w-full bg-white border border-gray-200/80 rounded-xl flex flex-col relative overflow-hidden'>
+    <div className='flex-1 w-full flex flex-col relative overflow-hidden h-full'>
       
       {/* Sticky Top Header */}
-      <header className='w-full px-6 py-4 bg-white/80 backdrop-blur-md flex items-center justify-between shrink-0 z-10'>
-        <h1 className='font-semibold text-gray-800 text-base truncate'>{data.title}</h1>
+      <header className='w-full px-6 pb-1 text-center backdrop-blur-md flex items-center justify-center shrink-0 z-10'>
+        <h1 className='font-semibold text-xl text-gray-800 '>{data.title}</h1>
       </header>
 
       {/* Messages Scrollable Container */}
-      <div className='flex-1 overflow-y-auto px-6 py-6 space-y-3 custom-scrollbar pb-32'>
-        {data.chat?.map((message, index) => {
+      <div className='flex-1 overflow-y-auto px-6 py-1 space-y-1 custom-scrollbar pb-32'>
+        {data.messages?.map((message, index) => {
           const isUser = message.role === 'user';
           
           return (
             <div 
               key={index} 
-              className={`flex items-start gap-3  max-w-2xl transition-all duration-200 ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+              className={`flex items-start gap-3 max-w-2xl transition-all duration-200 ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
             >
               {/* Avatar Handling */}
               <div>
@@ -57,7 +100,6 @@ function Conversation({ data }) {
                     alt="AI" 
                     className='w-6 h-6 mt-2.5'
                     onError={(e) => {
-                      // Fallback icon if image fails to load
                       e.target.style.display = 'none';
                       e.target.parentElement.innerHTML = '<svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>';
                     }}
@@ -66,13 +108,13 @@ function Conversation({ data }) {
               </div>
 
               {/* Chat Bubble */}
-              <div className={`py-2.5 rounded-2xl text-[15px] leading-relaxed 
+              <div className={`py-2 rounded-2xl text-[15px] leading-relaxed 
                 ${isUser 
-                  ? 'bg-gray-950 px-4 text-white  shadow-sm' 
-                  : 'bg-gray-100/0 '
+                  ? 'bg-gray-950 px-4 text-white shadow-sm' 
+                  : 'bg-gray-50 px-4 text-gray-800'
                 }`}
               >
-                <p className="whitespace-pre-line">{message.text}</p>
+                <p className="whitespace-pre-line">{message.content}</p>
               </div>
             </div>
           );
@@ -82,9 +124,16 @@ function Conversation({ data }) {
       </div>
 
       {/* Floating Modern Input Wrapper */}
-      <div className='absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white/95 to-transparent pt-10 pointer-events-none'>
+      <div className='absolute bottom-0 left-0 right-0  pointer-events-none z-10'>
         <div className="max-w-3xl mx-auto w-full pointer-events-auto">
-          <SearchBox handleSubmit={handleSubmit} />
+          <SearchBox 
+            handleSubmit={handleSubmit} 
+            loadingState={sending}
+          />
+
+          <p className="text-xs text-center pt-3 bg-gray-50 text-gray-500">
+            LegalEase is AI and can make mistakes.
+          </p>
         </div>
       </div>
 
