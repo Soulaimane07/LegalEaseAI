@@ -12,8 +12,6 @@ function User({ user, open, setOpen, handleLogin, handleLogout }) {
                 className="h-9 w-9 rounded-full border border-gray-200"
                 referrerPolicy="no-referrer" // Prevents Google image loading restrictions
               />
-
-              {/*  */}
             </button>
           ) : (
             /* Authentication Call to Actions */
@@ -35,23 +33,20 @@ function User({ user, open, setOpen, handleLogin, handleLogout }) {
         )}
 
         {(user && open) && (
-          <div className="flex flex-col items-center gap-3 absolute top-12 right-20 bg-white border border-gray-200 rounded-2xl p-4  shadow-lg">
+          <div className="flex flex-col items-center gap-3 absolute top-12 right-0 bg-white border border-gray-200 rounded-2xl p-4  shadow-lg">
             {/* User Profile Display */}
             <div className="flex flex-col gap-3 px-4 py-2">
-              <p className="text-xs text-gray-500 text-center font-medium">  {user.email}</p>
+              <p className="text-xs text-gray-400 text-center font-medium">  {user.email}</p>
               <img 
                 src={user.photoURL || "../images/default-avatar.png"} 
                 alt="Profile" 
                 className="h-20 mx-auto w-20 rounded-full border border-gray-200"
                 referrerPolicy="no-referrer"
               />
-              <div>
-                <p className="text-sm font-medium text-gray-900 text-center"> Hi, {user.displayName || "User"}! </p>
-                
-              </div>
+              <p className="text-sm font-medium text-gray-900 text-center"> Hi, {user.displayName || "User"}! </p>
               <button 
                 onClick={handleLogout}
-                className="text-xs font-medium text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition-colors ml-2 cursor-pointer"
+                className="text-xs mt-2 font-medium text-white hover:scale-105 transition-all bg-black  px-3 py-2 rounded-full  cursor-pointer"
               >
                 Sign out
               </button>
