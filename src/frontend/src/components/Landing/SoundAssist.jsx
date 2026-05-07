@@ -33,21 +33,22 @@ function ParticleCanvas() {
     resize()
 
     const colors = [
-        { h: 0, s: 0, l: 100 },   // Pure White
-        { h: 217, s: 90, l: 70 }, // Your brand blue (but bright)
-    ];
+  { h: 217, s: 100, l: 60 }, // Electric Blue
+  { h: 217, s: 100, l: 60 }, // Electric Blue
+  { h: 0, s: 0, l: 100 },     // Glowing White
+];
 
     // Reduced count slightly so the screen isn't overwhelmed by larger dots
-    const particles = Array.from({ length: 150 }, () => {
+    const particles = Array.from({ length: 100 }, () => {
     const color = colors[Math.floor(Math.random() * colors.length)]
     return {
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         // CHANGED: Increased base size (4) and variance (+ 3)
-        r: Math.random() * 3 + 3, 
+        r: Math.random() * 2 + 2, 
         vx: (Math.random() - 0.5) * 0.4,
         vy: (Math.random() - 0.5) * 0.4,
-        alpha: Math.random() * 0.5 + 0.3, // Slightly higher visibility
+        alpha: Math.random() * 0.7 + 0.5, // Slightly higher visibility
         color: `hsla(${color.h}, ${color.s}%, ${color.l}%, `,
     }
     })
@@ -87,6 +88,8 @@ function ParticleCanvas() {
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
         ctx.fillStyle = p.color + p.alpha + ')'
         ctx.fill()
+
+        
       })
       raf = requestAnimationFrame(draw)
     }
@@ -103,7 +106,7 @@ function ParticleCanvas() {
     <canvas 
       ref={canvasRef} 
       className="block w-full h-full pointer-events-none" 
-      style={{ filter: 'blur(0.7px)' }}
+      style={{ filter: 'blur(0.4px)' }}
     />
   )
 }

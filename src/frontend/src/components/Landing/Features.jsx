@@ -29,28 +29,27 @@ function Features() {
     const list = [
         {
             title: "An Agent-First Experience",
+            video: "/videos/1.mp4",
             desc: "Manage multiple agents at the same time, across any workspace, from one central mission control view.",
             color: "hover:border-blue-500/50"
         },
         {
             title: "Gemini 2.5 Pro",
+            video: "/videos/2.mp4",
             desc: "Harness Google's latest model for superior reasoning in multi-language contract interpretation (French/Arabic).",
             color: "hover:border-amber-500/50"
         },
         {
             title: "Clause Tracking",
+            video: "/videos/3.mp4",
             desc: "Seamlessly track modifications across versions of documents, syncing directly with your legal workspace.",
             color: "hover:border-red-500/50"
         },
         {
             title: "Team Collaboration",
+            video: "/videos/4.mp4",
             desc: "Share agent sessions with partners or clients in real-time, making complex legal projects collaborative.",
             color: "hover:border-blue-400/50"
-        },
-        {
-            title: "Planning Mode",
-            desc: "Break down massive legal audits into manageable steps, ensuring every clause is scrutinized for compliance.",
-            color: "hover:border-amber-400/50"
         }
     ];
 
@@ -111,7 +110,16 @@ function Features() {
                                 {item.desc}
                             </p>
                         </div>
-                        <div className='bg-red-100 h-[80vh] w-4/8 rounded-3xl'></div>
+                        <div className='bg-gray-100 h-[80vh] w-4/8 rounded-3xl overflow-hidden shadow-inner border border-gray-200/50'> 
+                            <video 
+                                src={item.video} 
+                                autoPlay 
+                                loop 
+                                muted 
+                                playsInline
+                                className='w-full h-full object-cover opacity-90 transition-opacity duration-500 hover:opacity-100'
+                            /> 
+                        </div>                    
                     </div>
                 ))}
             </div>

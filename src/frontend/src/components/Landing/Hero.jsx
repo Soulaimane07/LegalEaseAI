@@ -3,7 +3,7 @@ import { loginWithGoogle } from '../../redux/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
-function useTypewriter(text, speed = 40, delay = 400, onComplete) {
+function useTypewriter(text, speed = 5, delay = 100, onComplete) {
   const [displayedText, setDisplayedText] = useState("");
   const [started, setStarted] = useState(false);
 
@@ -25,7 +25,6 @@ function useTypewriter(text, speed = 40, delay = 400, onComplete) {
   return displayedText;
 }
 
-// Remove "default" from here
 function ParticleCanvas() {
   const canvasRef = useRef(null)
   const mouseRef = useRef({ x: -1000, y: -1000 })
@@ -50,12 +49,12 @@ function ParticleCanvas() {
 
     // Your Darkened Palette
     const colors = [
-      { h: 217, s: 89, l: 40 }, // Deep Blue
-      { h: 5, s: 81, l: 35 },   // Crimson Red
-      { h: 45, s: 90, l: 30 },  // Golden Amber
-    ];
+  { h: 217, s: 100, l: 60 }, // Electric Cyan/Blue (Sharp & Modern)
+  { h: 355, s: 100, l: 55 }, // Neon Crimson (High Energy)
+  { h: 45, s: 100, l: 50 },  // Vivid Gold (Glowing Amber)
+];
 
-    const particles = Array.from({ length: 100 }, () => {
+    const particles = Array.from({ length: 200 }, () => {
       const color = colors[Math.floor(Math.random() * colors.length)]
       const x = Math.random() * canvas.width
       const y = Math.random() * canvas.height
@@ -115,6 +114,7 @@ function ParticleCanvas() {
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
         ctx.fillStyle = p.color + p.alpha + ')'
         ctx.fill()
+        
       })
 
       raf = requestAnimationFrame(draw)
@@ -132,7 +132,7 @@ function ParticleCanvas() {
     <canvas 
       ref={canvasRef} 
       className="absolute inset-0 w-full h-full pointer-events-none z-0" 
-      style={{ filter: 'blur(0.8px)' }} // Slightly increased blur for "glassy" depth
+      style={{ filter: 'blur(0.4px)' }} // Slightly increased blur for "glassy" depth
     />
   )
 }
@@ -143,7 +143,7 @@ export default function Hero() {
   const [isTypingDone, setIsTypingDone] = useState(false);
   const fullTitle = "Accelerate your counsel with next-gen agent intelligence.";
   
-  const typedTitle = useTypewriter(fullTitle, 35, 500, () => {
+  const typedTitle = useTypewriter(fullTitle, 5, 500, () => {
     setIsTypingDone(true);
   });
 
