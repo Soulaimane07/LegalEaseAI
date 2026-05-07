@@ -3,6 +3,8 @@ import { Footer } from '../../components/FooterCTA'
 import Hero from '../../components/Landing/Hero'
 import Pricing from '../../components/Landing/Pricing'
 import SoundAssist from '../../components/Landing/SoundAssist'
+import Demo from '../../components/Landing/Demo'
+import Features from '../../components/Landing/Features'
 
 function Landing() {
   return (
@@ -12,6 +14,8 @@ function Landing() {
 
         <main>
             <Hero />
+            <Demo />
+            <Features />
             <Pricing />
             <SoundAssist />
         </main>

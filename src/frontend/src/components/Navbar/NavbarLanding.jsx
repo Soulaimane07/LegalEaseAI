@@ -39,6 +39,10 @@ export default function NavbarLanding() {
 
   const links = [
     {
+      "title": "Features",
+      "link": "#features"
+    },
+    {
       "title": "Use cases",
       "icon": true,
       "hasDropdown": true,
@@ -97,7 +101,7 @@ export default function NavbarLanding() {
       <div className="max-w-6xl relative mx-auto px-6 h-12 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <a href="/" className='flex items-center gap-2'>
+          <a href="#" className='flex items-center gap-2'>
             <img src='../images/logo.png' className="h-8 w-8" alt="logo" />
             <span className="font-medium tracking-tight text-gray-900">
               LegalEase AI<span className="text-blue-500">.</span>

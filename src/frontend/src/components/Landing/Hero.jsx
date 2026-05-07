@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useDispatch } from 'react-redux';
 import { loginWithGoogle } from '../../redux/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 
 function useTypewriter(text, speed = 40, delay = 400, onComplete) {
   const [displayedText, setDisplayedText] = useState("");
@@ -151,13 +151,23 @@ export default function Hero() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleLogin = useCallback(async () => {
+
+  const { user, status } = useSelector((state) => state.auth);
+  const isLoggedIn = status === 'succeeded';
+
+
+  const handleStartAction = useCallback(async () => {
+    if (isLoggedIn) {
+      // If already logged in, skip auth and go to their conversation
+      navigate(`/conversation/${user.uid}`);
+    } else {
+      // Trigger the existing login flow
       const resultAction = await dispatch(loginWithGoogle());
       if (loginWithGoogle.fulfilled.match(resultAction)) {
-          console.log("Logged in user:", resultAction.payload);
-          navigate('/conversation/' + resultAction.payload.uid);
+        navigate('/conversation/' + resultAction.payload.uid);
       }
-  }, [dispatch, navigate]);
+    }
+  }, [isLoggedIn, user, dispatch, navigate]);
 
 
 
@@ -189,19 +199,21 @@ export default function Hero() {
         <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 transition-all duration-1000 delay-300 transform ${
           isTypingDone ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
         }`}>
-          <button onClick={()=> handleLogin()} className="btn-primary cursor-pointer bg-black text-white rounded-full text-md text-base px-16 py-3">
-            Start for Free
+          <button 
+            onClick={handleStartAction} 
+            className="btn-primary cursor-pointer bg-black text-white rounded-full text-md text-base px-12 py-3 hover:bg-gray-800 transition-colors"
+          >
+            {isLoggedIn ? "Resume Consultation" : "Start for Free"}
           </button>
           
-          {/* Glass Button using the darkened colors we set earlier */}
-          <button className="btn-ghost cursor-pointer rounded-full text-md text-base px-8 py-3 
-                   bg-gray-100/50 backdrop-blur-md border border-/20 
-                   hover:bg-gray-200/20 transition-all duration-300 flex items-center gap-2 border-1 border-black/10 ">
+          <a href='#demo' className="btn-ghost cursor-pointer rounded-full text-md text-base px-8 py-3 
+                  bg-gray-100/50 backdrop-blur-md border border-black/10 
+                  hover:bg-gray-200/20 transition-all duration-300 flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
             </svg>
             Watch demo
-          </button>
+          </a>
         </div>
       </div>
     </section>
