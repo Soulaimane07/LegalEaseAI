@@ -78,8 +78,10 @@ function Conversation() {
 
       <div className='absolute bottom-0 left-0 right-0 pointer-events-none z-10'>
         <div className="max-w-3xl mx-auto w-full pointer-events-auto">
-          <SearchBox /> 
-          <p className="text-xs text-center pt-3 bg-gray-50 text-gray-500">
+          <div className='z-20 pb-1 bg-gray-50'>
+            <SearchBox /> 
+          </div>
+          <p className="text-xs z-10 text-center pt-2 bg-gray-50 text-gray-500">
             LegalEase is AI and can make mistakes.
           </p>
         </div>
