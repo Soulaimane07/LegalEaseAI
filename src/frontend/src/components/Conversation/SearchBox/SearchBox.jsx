@@ -12,7 +12,7 @@ function SearchBox({ setDraft }) {
   const { status } = useSelector((state) => state.auth); // Accessing the central auth state
   
   const isProcessing = chatLoading;
-  const isAuthenticated = status === 'authenticated';
+  const isAuthenticated = status === 'succeeded';
 
   const handleSearchSubmit = async (e) => {
     if (e.key === 'Enter' && query.trim() !== "" && !isProcessing) {
