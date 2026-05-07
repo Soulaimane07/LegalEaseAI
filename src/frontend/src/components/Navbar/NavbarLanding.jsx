@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react'
-import { auth, googleProvider } from "./firebase"; 
-import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from '../../redux/slices/firebase';
+import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 import User from './User';
 import NavbarLandingDetails from './NavbarLandingDetails';
 import { TfiAngleDown } from "react-icons/tfi";
 
+import { useSelector, useDispatch } from 'react-redux';
+import { loginWithGoogle, logoutUser, setUser } from '../../redux/slices/authSlice';
+
 export default function NavbarLanding() {
-  const [user, setUser] = useState(null)
   const [open, setOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-
-  // Track the string title of the hovered item: 'Use cases', 'Ressources', or null
   const [activeDropdown, setActiveDropdown] = useState(null)
+
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -57,27 +60,30 @@ export default function NavbarLanding() {
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+      if (currentUser) {
+        dispatch(setUser({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          photoURL: currentUser.photoURL,
+        }));
+      } else {
+        dispatch(setUser(null));
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [dispatch]);
 
   const handleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      navigate('/conversation/'+result.user.uid); 
-    } catch (error) {
-      console.error("Login Error:", error.message);
+    const resultAction = await dispatch(loginWithGoogle());
+    if (loginWithGoogle.fulfilled.match(resultAction)) {
+      navigate('/conversation/' + resultAction.payload.uid);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setOpen(false); 
-    } catch (error) {
-      console.error("Logout Error:", error.message);
-    }
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    setOpen(false);
   };
 
   return (

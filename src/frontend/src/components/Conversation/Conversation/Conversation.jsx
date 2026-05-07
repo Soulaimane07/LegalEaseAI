@@ -1,71 +1,25 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import SearchBox from '../SearchBox/SearchBox';
 import { LuBot } from "react-icons/lu";
-import { auth } from './firebase'; // Ensure correct path to your frontend firebase instance
-import { API_BASE_URL } from '../../variables'; // Ensure correct path to your global variables file
 
-function Conversation({ data, refreshChat }) {
-  const [sending, setSending] = useState(false);
+function Conversation() {
   const messagesEndRef = useRef(null);
+  
+  // Pull everything from Redux
+  const { currentConversation, loading } = useSelector((state) => state.chat);
 
-  // Auto-scroll to the bottom whenever message history updates
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    if (data?.messages) {
+    if (currentConversation?.messages) {
       scrollToBottom();
     }
-  }, [data?.messages]);
+  }, [currentConversation?.messages]);
 
-  // Handles sending ongoing replies within this active conversation session
-  const handleSubmit = async (e, textContent) => {
-    if (!textContent || textContent.trim() === "") return;
-    
-    setSending(true);
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        alert("Please sign in to continue this consultation.");
-        return;
-      }
-
-      // 1. Fetch fresh authorization JWT token from Firebase auth context
-      const token = await currentUser.getIdToken(true);
-      
-      const messagePayload = {
-        role: "user",
-        content: textContent.trim(),
-        timestamp: new Date().toISOString()
-      };
-
-      // 2. Dispatch request to append a new message bubble to the existing Firestore document
-      const response = await fetch(`${API_BASE_URL}/chat/${data?.id}/message`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(messagePayload)
-      });
-
-      if (!response.ok) throw new Error("Failed to append message to the session server.");
-
-      // 3. Trigger parent history refresh callback to pull the updated document data down
-      if (refreshChat) {
-        await refreshChat();
-      }
-
-    } catch (error) {
-      console.error("Failed to append message bubble:", error);
-    } finally {
-      setSending(false);
-    }
-  };
-
-  // Safe fallback if data is null/empty when switching chats or starting a new one
-  if (!data) {
+  if (!currentConversation) {
     return (
       <div className='flex-1 h-[calc(100vh-48px)] bg-white border border-gray-200/80 rounded-xl flex flex-col items-center justify-center text-gray-400 p-6 shadow-sm'>
         <LuBot size={40} className="mb-3 text-gray-300 animate-pulse" />
@@ -76,67 +30,38 @@ function Conversation({ data, refreshChat }) {
 
   return (
     <div className='flex-1 w-full flex flex-col relative overflow-hidden h-full'>
-      
-      {/* Sticky Top Header */}
       <header className='w-full px-6 pb-1 text-center backdrop-blur-md flex items-center justify-center shrink-0 z-10'>
-        <h1 className='font-semibold text-xl text-gray-800 '>{data.title}</h1>
+        <h1 className='font-semibold text-xl text-gray-800 '>{currentConversation.title}</h1>
       </header>
 
-      {/* Messages Scrollable Container */}
       <div className='flex-1 overflow-y-auto px-6 py-1 space-y-3 custom-scrollbar pb-32'>
-        {data.messages?.map((message, index) => {
+        {currentConversation.messages?.map((message, index) => {
           const isUser = message.role === 'user';
-          
           return (
             <div 
               key={index} 
               className={`flex items-start gap-3 max-w-2xl transition-all duration-200 ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
             >
-              {/* Avatar Handling */}
-              <div>
-                {!isUser && (
-                  <img 
-                    src="/images/logo.png" 
-                    alt="AI" 
-                    className='w-6 h-6 mt-2.5'
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerHTML = '<svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>';
-                    }}
-                  />
-                )}
-              </div>
-
-              {/* Chat Bubble */}
               <div className={`py-2 rounded-2xl text-[15px] leading-relaxed 
-                ${isUser 
-                  ? 'bg-gray-950 px-4 text-white shadow-sm' 
-                  : 'bg-gray-50 px-1 text-gray-800'
-                }`}
+                ${isUser ? 'bg-gray-950 px-4 text-white shadow-sm' : 'bg-gray-50 px-1 text-gray-800'}`}
               >
                 <p className="whitespace-pre-line">{message.content}</p>
               </div>
             </div>
           );
         })}
-        {/* Invisible anchor element to snap window to bottom */}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Floating Modern Input Wrapper */}
-      <div className='absolute bottom-0 left-0 right-0  pointer-events-none z-10'>
+      <div className='absolute bottom-0 left-0 right-0 pointer-events-none z-10'>
         <div className="max-w-3xl mx-auto w-full pointer-events-auto">
-          <SearchBox 
-            handleSubmit={handleSubmit} 
-            loadingState={sending}
-          />
-
+          {/* No more handleSubmit prop needed! SearchBox handles it via Redux */}
+          <SearchBox /> 
           <p className="text-xs text-center pt-3 bg-gray-50 text-gray-500">
             LegalEase is AI and can make mistakes.
           </p>
         </div>
       </div>
-
     </div>
   );
 }

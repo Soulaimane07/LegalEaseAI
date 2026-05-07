@@ -1,4 +1,7 @@
-import { useEffect, useState, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { loginWithGoogle } from '../../redux/slices/authSlice';
+import { useNavigate } from 'react-router-dom';
 
 function useTypewriter(text, speed = 40, delay = 400, onComplete) {
   const [displayedText, setDisplayedText] = useState("");
@@ -144,6 +147,20 @@ export default function Hero() {
     setIsTypingDone(true);
   });
 
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleLogin = useCallback(async () => {
+      const resultAction = await dispatch(loginWithGoogle());
+      if (loginWithGoogle.fulfilled.match(resultAction)) {
+          console.log("Logged in user:", resultAction.payload);
+          navigate('/conversation/' + resultAction.payload.uid);
+      }
+  }, [dispatch, navigate]);
+
+
+
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden ">
       <ParticleCanvas />
@@ -172,7 +189,7 @@ export default function Hero() {
         <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 transition-all duration-1000 delay-300 transform ${
           isTypingDone ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
         }`}>
-          <button className="btn-primary cursor-pointer bg-black text-white rounded-full text-md text-base px-16 py-3">
+          <button onClick={()=> handleLogin()} className="btn-primary cursor-pointer bg-black text-white rounded-full text-md text-base px-16 py-3">
             Start for Free
           </button>
           

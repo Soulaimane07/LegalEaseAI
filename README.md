@@ -89,3 +89,9 @@ Le projet repose sur une architecture moderne assurant sécurité et scalabilit�
 - OUHMIDA Soulaimane – CEO | Responsable Technique & IA
 - EL MOUHTADI Feirouz – CMO | Stratégie Commerciale & Marketing
 - HAIMOUDI Nouaman – CTO | Stratégie, Gestion & Coordination
+
+
+
+
+source venv/bin/activate
+uvicorn main:app --reload --port 8000

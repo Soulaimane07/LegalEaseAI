@@ -1,98 +1,103 @@
-import React, {useState, useEffect} from 'react'
-import User from './User'
-import { auth, googleProvider } from "./firebase"; 
-import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import React, { useState, useEffect, useCallback } from 'react';
+import User from './User';
+import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 
-function Navbar({setUserr}) {
-    const [user, setUser] = useState(null) // Tracks the authenticated user
-    const [open, setOpen] = useState(false) // Tracks the authenticated user
-    const [isVisible, setIsVisible] = useState(true)
-    const [lastScrollY, setLastScrollY] = useState(0)
-    const [scrolled, setScrolled] = useState(false)
+import { useSelector, useDispatch } from 'react-redux';
+import { loginWithGoogle, logoutUser, setUser } from '../../redux/slices/authSlice';
+import { auth } from '../../redux/slices/firebase';
 
-    useEffect(() => {
-        const controlNavbar = () => {
-          const currentScrollY = window.scrollY
-          setScrolled(currentScrollY > 20)
-    
-          if (currentScrollY > lastScrollY && currentScrollY > 50) {
-            setIsVisible(false)
-          } else {
-            setIsVisible(true)
-          }
-          setLastScrollY(currentScrollY)
-        }
-    
-        window.addEventListener('scroll', controlNavbar)
-        return () => window.removeEventListener('scroll', controlNavbar)
-    }, [lastScrollY])
+function Navbar() {
+    // UI Local States
+    const [open, setOpen] = useState(false);
+    const [isVisible, setIsVisible] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
+    const [scrolled, setScrolled] = useState(false);
 
-
-
-
-
-
-
-
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
-  // Listen for authentication changes globally
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setUserr(currentUser); // Update local state with the authenticated user
-    });
-    return () => unsubscribe(); // Clean up subscription on unmount
-  }, []);
+    const { user } = useSelector((state) => state.auth);
 
-  const handleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log("Logged in user:", result.user);
-      navigate('/conversation/'+result.user.uid); // Navigate to dashboard after login
-    } catch (error) {
-      console.error("Login Error:", error.message);
-    }
-  };
+    // Navbar scroll logic
+    useEffect(() => {
+        const controlNavbar = () => {
+          const currentScrollY = window.scrollY;
+          setScrolled(currentScrollY > 20);
+    
+          if (currentScrollY > lastScrollY && currentScrollY > 50) {
+            setIsVisible(false);
+          } else {
+            setIsVisible(true);
+          }
+          setLastScrollY(currentScrollY);
+        };
+    
+        window.addEventListener('scroll', controlNavbar);
+        return () => window.removeEventListener('scroll', controlNavbar);
+    }, [lastScrollY]);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setOpen(false); // Close the profile dropdown on logout
-      navigate('/');
-      console.log("User signed out");
-    } catch (error) {
-      console.error("Logout Error:", error.message);
-    }
-  };
+    // Sync Firebase Auth with Redux
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            if (currentUser) {
+                dispatch(setUser({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    displayName: currentUser.displayName,
+                    photoURL: currentUser.photoURL,
+                }));
+            } else {
+                dispatch(setUser(null));
+            }
+        });
+        return () => unsubscribe();
+    }, [dispatch]);
 
-  return (
-    <nav 
-      className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-500 ${
-        isVisible ? 'translate-y-0' : '-translate-y-full'
-      } ${
-        scrolled ? 'bg-white/80 backdrop-blur-xl ' : 'bg-transparent'
-      }`}
-    >
-        <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
-            <a href="#" className='flex items-center gap-2'>
-                <img src='../images/logo.png' className="h-8 w-8" alt="logo" />
-                <span className="font-medium tracking-tight text-gray-900">
-                LegalEase AI<span className="text-blue-500">.</span>
-                </span>
-            </a>
+    // Authentication Handlers using Redux Thunks
+    const handleLogin = useCallback(async () => {
+        const resultAction = await dispatch(loginWithGoogle());
+        if (loginWithGoogle.fulfilled.match(resultAction)) {
+            console.log("Logged in user:", resultAction.payload);
+            navigate('/conversation/' + resultAction.payload.uid);
+        }
+    }, [dispatch, navigate]);
 
-            <User 
-              user={user} 
-              open={open} 
-              setOpen={setOpen} 
-              handleLogin={handleLogin} 
-              handleLogout={handleLogout} 
-            />
-        </div>
-    </nav>
-  )
+    const handleLogout = useCallback(async () => {
+        const resultAction = await dispatch(logoutUser());
+        if (logoutUser.fulfilled.match(resultAction)) {
+            setOpen(false);
+            navigate('/');
+            console.log("User signed out");
+        }
+    }, [dispatch, navigate]);
+
+    return (
+        <nav 
+            className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-500 ${
+                isVisible ? 'translate-y-0' : '-translate-y-full'
+            } ${
+                scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100' : 'bg-transparent'
+            }`}
+        >
+            <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
+                <a href="/" className='flex items-center gap-2'>
+                    <img src='../images/logo.png' className="h-8 w-8" alt="logo" />
+                    <span className="font-medium tracking-tight text-gray-900">
+                        LegalEase AI<span className="text-blue-500">.</span>
+                    </span>
+                </a>
+
+                <User 
+                    user={user} 
+                    open={open} 
+                    setOpen={setOpen} 
+                    handleLogin={handleLogin} 
+                    handleLogout={handleLogout} 
+                />
+            </div>
+        </nav>
+    );
 }
 
-export default Navbar
+export default Navbar;

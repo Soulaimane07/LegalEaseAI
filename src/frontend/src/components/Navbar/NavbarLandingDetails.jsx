@@ -1,6 +1,6 @@
 import React from 'react'
 import { TfiAngleRight } from "react-icons/tfi";
-import { AiOutlineAppstore, AiOutlineProduct  } from "react-icons/ai";
+import { AiOutlineProduct  } from "react-icons/ai";
 import { FiLayers } from "react-icons/fi";
 import { GoCodeSquare } from "react-icons/go";
 
