@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import User from './User';
 import NavbarLandingDetails from './NavbarLandingDetails';
 import { TfiAngleDown } from "react-icons/tfi";
+import { IoIosGlobe  } from "react-icons/io";
 
 import { useSelector, useDispatch } from 'react-redux';
 import { loginWithGoogle, logoutUser, setUser } from '../../redux/slices/authSlice';
+import Contries from './Contries';
 
 export default function NavbarLanding() {
   const [open, setOpen] = useState(false)
@@ -130,6 +132,8 @@ export default function NavbarLanding() {
 
         {/* Actions Layout */}
         <div className="hidden md:flex items-center gap-3">
+          <Contries />
+
           <User
               user={user} 
               open={open} 

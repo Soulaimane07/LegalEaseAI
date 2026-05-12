@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { loginWithGoogle, logoutUser, setUser } from '../../redux/slices/authSlice';
 import { auth } from '../../redux/slices/firebase';
+import { IoIosGlobe } from 'react-icons/io';
+import Contries from './Contries';
 
 function Navbar() {
     // UI Local States
@@ -88,13 +90,17 @@ function Navbar() {
                     </span>
                 </a>
 
-                <User 
-                    user={user} 
-                    open={open} 
-                    setOpen={setOpen} 
-                    handleLogin={handleLogin} 
-                    handleLogout={handleLogout} 
-                />
+                <div className="flex items-center gap-6">
+                    <Contries />
+
+                    <User 
+                        user={user} 
+                        open={open} 
+                        setOpen={setOpen} 
+                        handleLogin={handleLogin} 
+                        handleLogout={handleLogout} 
+                    />
+                </div>
             </div>
         </nav>
     );
