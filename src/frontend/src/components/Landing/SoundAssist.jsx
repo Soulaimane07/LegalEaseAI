@@ -1,4 +1,7 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { loginWithGoogle } from '../../redux/slices/authSlice';
+import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 
 function ParticleCanvas() {
   const canvasRef = useRef(null)
@@ -111,7 +114,34 @@ function ParticleCanvas() {
   )
 }
 
+
+
+
+
+
+
 function SoundAssist() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { user, status } = useSelector((state) => state.auth);
+    const isLoggedIn = status === 'succeeded';
+
+const handleStartAction = useCallback(async () => {
+    if (isLoggedIn) {
+      // If already logged in, skip auth and go to their conversation
+      navigate(`/conversation/${user.uid}`);
+    } else {
+      // Trigger the existing login flow
+      const resultAction = await dispatch(loginWithGoogle());
+      if (loginWithGoogle.fulfilled.match(resultAction)) {
+        navigate('/conversation/' + resultAction.payload.uid);
+      }
+    }
+  }, [isLoggedIn, user, dispatch, navigate]);
+
+
+
   return (
     <div className='relative bg- min-h-screen w-full text-white flex items-center px-20 font-semibold rounded-[40px] overflow-hidden'>
       
@@ -131,12 +161,15 @@ function SoundAssist() {
             Now.
         </h1>
         
-        <button className='bg-white cursor-pointer text-black hover:bg-gray-100 transition-colors rounded-full text-base px-20 mt-10 py-3 relative z-20'>
+        <button
+          onClick={handleStartAction}  
+          className='bg-white cursor-pointer text-black hover:bg-gray-100 transition-colors rounded-full text-base px-20 mt-10 py-3 relative z-20'
+        >
           Let's Talk
         </button>
-        <button className=' cursor-pointer text-white px-10 mt-10 py-3 relative z-20'>
+        <a href='#demo' className=' cursor-pointer text-white px-10 mt-10 py-3 relative z-20'>
           Watch Demo
-        </button>
+        </a>
       </div>
 
     </div>
