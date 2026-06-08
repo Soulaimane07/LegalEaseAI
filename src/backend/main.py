@@ -8,6 +8,10 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+from fastapi import UploadFile, File
+import shutil
+
+
 # --- INITIALIZE FIREBASE ADMIN ENGINE ---
 cred_path = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
 
@@ -19,6 +23,9 @@ db = firestore.client()
 
 app = FastAPI(title="LegalEase AI - Firestore Engine")
 security = HTTPBearer()
+
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # --- CORS MIDDLEWARE ---
 origins = ["*"]
@@ -189,3 +196,37 @@ async def get_all_global_chats():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch global database records: {str(e)}"
         )
+
+
+@app.post("/api/documents/upload")
+async def upload_document(
+    file: UploadFile = File(...),
+    user_id: str = Depends(get_current_user_id)
+):
+
+    filename = f"{user_id}_{file.filename}"
+
+    file_path = os.path.join(
+        UPLOAD_FOLDER,
+        filename
+    )
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    doc_ref = db.collection("documents").document()
+
+    doc_ref.set({
+        "user_id": user_id,
+        "filename": file.filename,
+        "stored_filename": filename,
+        "file_path": file_path,
+        "status": "uploaded",
+        "created_at": datetime.datetime.utcnow()
+    })
+
+    return {
+        "status": "success",
+        "document_id": doc_ref.id,
+        "filename": file.filename
+    }

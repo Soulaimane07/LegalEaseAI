@@ -1,0 +1,9 @@
+Force structure.
+
+{
+  "summary": "",
+  "obligations": [],
+  "risks": [],
+  "missing_clauses": [],
+  "recommendations": []
+}

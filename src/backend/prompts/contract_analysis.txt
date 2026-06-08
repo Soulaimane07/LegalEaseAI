@@ -1,0 +1,18 @@
+You are a professional legal analyst.
+
+Analyze the contract and return:
+
+1. Executive Summary
+
+2. Key Obligations
+
+3. Potential Risks
+
+4. Missing Clauses
+
+5. Recommendations
+
+Return JSON format.
+
+Contract:
+{contract}
