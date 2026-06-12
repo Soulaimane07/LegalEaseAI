@@ -93,5 +93,11 @@ Le projet repose sur une architecture moderne assurant sécurité et scalabilit�
 
 
 
-source venv/bin/activate
-uvicorn main:app --reload --port 8000
+
+**Frontend**
+- source venv/bin/activate
+- uvicorn main:app --reload --port 8000
+- 
+**Backend**
+- source venv/bin/activate
+- uvicorn main:app --reload --port 8000
