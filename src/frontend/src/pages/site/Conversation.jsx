@@ -4,17 +4,20 @@ import Sidebar from '../../components/Conversation/Sidebar';
 import Navbar from '../../components/Navbar/Navbar';
 import StartConversation from '../../components/Conversation/StartConversation';
 import ConversationComp from '../../components/Conversation/Conversation/Conversation';
+import UpgradeModal from '../../components/UpgradeModal';
 import { fetchConversations } from '../../redux/slices/chatSlice';
+import { fetchUserProfile } from '../../redux/slices/authSlice';
 
 export default function Conversation() {
   const dispatch = useDispatch();
-  
+
   const { user } = useSelector((state) => state.auth);
   const { conversations, currentConversation, loading } = useSelector((state) => state.chat);
 
   useEffect(() => {
     if (user) {
       dispatch(fetchConversations());
+      dispatch(fetchUserProfile()); // load plan + remaining free analyses
     }
   }, [user, dispatch]);
 
@@ -46,6 +49,9 @@ export default function Conversation() {
           )}
         </div>
       </div>
+
+      {/* "Upgrade to Pro" modal (opens automatically on a 403 / when exhausted) */}
+      <UpgradeModal />
     </div>
   );
 }

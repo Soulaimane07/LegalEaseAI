@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+sqlalchemy
+google-auth
+requests
+google-genai
+chromadb
+pymupdf
+python-dotenv
