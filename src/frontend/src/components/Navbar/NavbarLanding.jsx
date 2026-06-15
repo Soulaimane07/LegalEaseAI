@@ -1,80 +1,64 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react';
 import { auth } from '../../redux/slices/firebase';
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 import User from './User';
 import NavbarLandingDetails from './NavbarLandingDetails';
 import { TfiAngleDown } from "react-icons/tfi";
-import { IoIosGlobe  } from "react-icons/io";
 
 import { useSelector, useDispatch } from 'react-redux';
-import { loginWithGoogle, logoutUser, setUser } from '../../redux/slices/authSlice';
+import { loginWithGoogle, logoutUser, fetchUserProfile } from '../../redux/slices/authSlice';
 import Contries from './Contries';
 
+const BACKEND_URL = "https://silver-fiesta-p5x6gpxv5w9c7p9r-5173.app.github.dev";
+
 export default function NavbarLanding() {
-  const [open, setOpen] = useState(false)
-  const [isVisible, setIsVisible] = useState(true)
-  const [lastScrollY, setLastScrollY] = useState(0)
-  const [scrolled, setScrolled] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [activeDropdown, setActiveDropdown] = useState(null)
+  const [open, setOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+
+  // Use a mutable ref for scroll tracking to prevent infinite rendering cycles
+  const lastScrollY = useRef(0);
 
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
 
+  // Optimized Scroll Event Listener
   useEffect(() => {
     const controlNavbar = () => {
-      const currentScrollY = window.scrollY
-      setScrolled(currentScrollY > 20)
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 20);
 
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setIsVisible(false)
+      if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+        setIsVisible(false);
       } else {
-        setIsVisible(true)
+        setIsVisible(true);
       }
-      setLastScrollY(currentScrollY)
-    }
+      lastScrollY.current = currentScrollY;
+    };
 
-    window.addEventListener('scroll', controlNavbar)
-    return () => window.removeEventListener('scroll', controlNavbar)
-  }, [lastScrollY])
+    window.addEventListener('scroll', controlNavbar);
+    return () => window.removeEventListener('scroll', controlNavbar);
+  }, []);
 
   const links = [
-    {
-      "title": "Features",
-      "link": "#features"
-    },
-    {
-      "title": "Use cases",
-      "icon": true,
-      "hasDropdown": true,
-      "link": "/usecases"
-    },
-    {
-      "title": "Pricing",
-      "link": "#pricing"
-    },
-    {
-      "title": "Ressources",
-      "icon": true,
-      "hasDropdown": true, // Added flag here as well
-      "link": "/ressources"
-    }
-  ]
+    { "title": "Features", "link": "#features" },
+    { "title": "Use cases", "icon": true, "hasDropdown": true, "link": "/usecases" },
+    { "title": "Pricing", "link": "#pricing" },
+    { "title": "Ressources", "icon": true, "hasDropdown": true, "link": "/ressources" }
+  ];
 
-  const navigate = useNavigate();
-  
+  // Robust Auth Lifecycle Synchronizer
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        dispatch(setUser({
-          uid: currentUser.uid,
-          email: currentUser.email,
-          displayName: currentUser.displayName,
-          photoURL: currentUser.photoURL,
-        }));
+        // Run the secondary profile sync thunk to pick up user plan tiers
+        dispatch(fetchUserProfile(currentUser));
       } else {
-        dispatch(setUser(null));
+        dispatch({ type: 'auth/setUser', payload: null });
       }
     });
     return () => unsubscribe();
@@ -97,7 +81,7 @@ export default function NavbarLanding() {
       className={`fixed top-0 left-0 right-0 z-50 transition-transform hover:bg-white duration-500 ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${
-        scrolled || activeDropdown ? 'bg-white/80 backdrop-blur-xl ' : 'bg-transparent'
+        scrolled || activeDropdown ? 'bg-white/80 backdrop-blur-xl border-b border-gray-100' : 'bg-transparent'
       }`}
     >
       <div className="max-w-6xl relative mx-auto px-6 h-12 flex items-center justify-between">
@@ -114,7 +98,6 @@ export default function NavbarLanding() {
             {links.map((l, index) => (
               <li 
                 key={index}
-                // Set the specific title string on hover entry
                 onMouseEnter={() => l.hasDropdown && setActiveDropdown(l.title)}
                 onMouseLeave={() => l.hasDropdown && setActiveDropdown(null)}
                 className="relative py-2" 
@@ -185,6 +168,10 @@ export default function NavbarLanding() {
                     className="h-10 w-10 rounded-full"
                     referrerPolicy="no-referrer"
                   />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-gray-800">{user.displayName}</span>
+                    <span className="text-xs text-blue-600 font-medium capitalize">{user.plan} Account</span>
+                  </div>
                 </div>
                 <button onClick={handleLogout} className="w-full text-center py-2 bg-red-50 text-red-600 rounded-full font-medium text-sm">
                   Sign out
@@ -200,5 +187,5 @@ export default function NavbarLanding() {
         </div>
       )}
     </nav>
-  )
+  );
 }

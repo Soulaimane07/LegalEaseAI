@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
+    "@stripe/react-stripe-js": "^6.6.0",
+    "@stripe/stripe-js": "^9.8.0",
     "@tailwindcss/vite": "^4.2.4",
     "firebase": "^12.12.1",
     "framer-motion": "^12.38.0",

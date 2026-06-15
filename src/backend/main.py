@@ -1,6 +1,6 @@
 import os
 import datetime
-from typing import List
+from typing import List, Optional
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -10,7 +10,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from fastapi import UploadFile, File
 import shutil
-
 
 # --- INITIALIZE FIREBASE ADMIN ENGINE ---
 cred_path = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
@@ -47,11 +46,16 @@ class MessageModel(BaseModel):
 class ConversationCreate(BaseModel):
     title: str = Field(default="New Legal Consultation")
 
-# Added Schema for handling Title Updates
 class ConversationUpdate(BaseModel):
     title: str = Field(..., min_length=1, max_length=100, description="The new custom title for the chat session")
 
-# --- AUTH DEPENDENCY (THE GATEKEEPER) ---
+# UPDATED: Added 'subscribed' to allowed values
+class SubscriptionUpdate(BaseModel):
+    plan: str = Field(..., description="Must be 'freemium', 'premium', or 'subscribed'")
+
+
+# --- SUBSCRIPTION LAYER & AUTH ---
+
 async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
     """Extracts and verifies the Firebase ID token from the Authorization header."""
     token = credentials.credentials
@@ -64,14 +68,85 @@ async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depend
             detail=f"Invalid Authorization Token: {str(e)}"
         )
 
+async def get_user_tier(user_id: str = Depends(get_current_user_id)) -> str:
+    """
+    Fetches the user's subscription plan from Firestore. 
+    If the user profile does not exist yet, it safely creates one with the default 'freemium' plan.
+    """
+    user_ref = db.collection("users").document(user_id)
+    user_doc = user_ref.get()
+    
+    if not user_doc.exists:
+        default_profile = {
+            "user_id": user_id,
+            "plan": "freemium",
+            "updated_at": datetime.datetime.utcnow()
+        }
+        user_ref.set(default_profile)
+        return "freemium"
+    
+    return user_doc.to_dict().get("plan", "freemium")
+
+# UPDATED: Changed condition to check for your new target tier value: 'subscribed'
+def require_premium(tier: str = Depends(get_user_tier)):
+    """Dependency modifier used to fence off endpoints exclusively for paid/subscribed accounts."""
+    if tier not in ["subscribed", "premium"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This feature requires an active Subscribed account status."
+        )
+
+
+# --- SUBSCRIPTION MANAGEMENT ENDPOINTS ---
+
+@app.get("/api/user/profile")
+async def get_user_profile(
+    user_id: str = Depends(get_current_user_id), 
+    tier: str = Depends(get_user_tier)
+):
+    """Returns the logged-in user's account registration details and current tier."""
+    return {"user_id": user_id, "subscription_plan": tier}
+
+
+@app.patch("/api/user/subscription")
+async def update_subscription_plan(
+    payload: SubscriptionUpdate,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Updates a user's operational tier to 'subscribed' following confirmation signals."""
+    if payload.plan not in ["freemium", "premium", "subscribed"]:
+        raise HTTPException(status_code=400, detail="Invalid subscription plan configuration assigned.")
+        
+    user_ref = db.collection("users").document(user_id)
+    user_ref.set({
+        "user_id": user_id,
+        "plan": payload.plan,
+        "updated_at": datetime.datetime.utcnow()
+    }, merge=True)
+    
+    return {"status": "success", "updated_plan": payload.plan}
+
+
 # --- SECURE FIRESTORE ENDPOINTS ---
 
 @app.post("/api/chat/new")
 async def create_conversation(
     payload: ConversationCreate, 
-    user_id: str = Depends(get_current_user_id)
+    user_id: str = Depends(get_current_user_id),
+    tier: str = Depends(get_user_tier)
 ):
-    """Creates a secure conversation document mapped directly to the verified user account."""
+    """Creates a conversation document. Enforces slot limits for freemium tiers."""
+    
+    # UPDATED: Checks if the user is still stuck on the free plan tier
+    if tier == "freemium":
+        existing_chats = db.collection("conversations").where("user_id", "==", user_id).get()
+        
+        if len(existing_chats) >= 3:  
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Freemium users are capped at 3 conversation slots. Please upgrade to premium for infinite access."
+            )
+
     conversation_data = {
         "user_id": user_id, 
         "title": payload.title,
@@ -89,7 +164,6 @@ async def append_message(
     message: MessageModel,
     user_id: str = Depends(get_current_user_id)
 ):
-    """Safely appends a message bubble directly inside the Firestore Document array."""
     doc_ref = db.collection("conversations").document(conversation_id)
     doc = doc_ref.get()
     
@@ -116,7 +190,6 @@ async def get_conversation_history(
     conversation_id: str,
     user_id: str = Depends(get_current_user_id)
 ):
-    """Retrieves all data and complete message list from a protected Firestore document."""
     doc_ref = db.collection("conversations").document(conversation_id)
     doc = doc_ref.get()
     
@@ -136,7 +209,6 @@ async def rename_conversation(
     payload: ConversationUpdate,
     user_id: str = Depends(get_current_user_id)
 ):
-    """Updates the title field of a conversation if the requester owns the document."""
     doc_ref = db.collection("conversations").document(conversation_id)
     doc = doc_ref.get()
 
@@ -155,7 +227,6 @@ async def delete_conversation(
     conversation_id: str,
     user_id: str = Depends(get_current_user_id)
 ):
-    """Permanently deletes a conversation log from Firestore if the requester owns it."""
     doc_ref = db.collection("conversations").document(conversation_id)
     doc = doc_ref.get()
 
@@ -171,7 +242,6 @@ async def delete_conversation(
 
 @app.get("/api/chats/all", response_model=List[dict])
 async def get_all_global_chats():
-    """Retrieves every chat session from the database globally without authentication."""
     try:
         chats_ref = db.collection("conversations").order_by(
             "created_at", direction=firestore.Query.DESCENDING
@@ -198,18 +268,16 @@ async def get_all_global_chats():
         )
 
 
+# --- PREMIUM ONLY BOUNDARY ---
+
 @app.post("/api/documents/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    user_id: str = Depends(get_current_user_id)
+    user_id: str = Depends(get_current_user_id),
+    _=Depends(require_premium)  
 ):
-
     filename = f"{user_id}_{file.filename}"
-
-    file_path = os.path.join(
-        UPLOAD_FOLDER,
-        filename
-    )
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)

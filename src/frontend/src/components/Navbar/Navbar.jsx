@@ -4,7 +4,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 
 import { useSelector, useDispatch } from 'react-redux';
-import { loginWithGoogle, logoutUser, setUser } from '../../redux/slices/authSlice';
+import { fetchUserProfile, loginWithGoogle, logoutUser, setUser } from '../../redux/slices/authSlice';
 import { auth } from '../../redux/slices/firebase';
 import { IoIosGlobe } from 'react-icons/io';
 import Contries from './Contries';
@@ -20,6 +20,7 @@ function Navbar() {
     const navigate = useNavigate();
 
     const { user } = useSelector((state) => state.auth);
+  console.log(user);
 
     // Navbar scroll logic
     useEffect(() => {
@@ -41,14 +42,11 @@ function Navbar() {
 
     // Sync Firebase Auth with Redux
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                dispatch(setUser({
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    displayName: currentUser.displayName,
-                    photoURL: currentUser.photoURL,
-                }));
+                //  CRITICAL: Do NOT use dispatch(setUser({...})) here!
+                // This async thunk will ping FastAPI and include your plan.
+                dispatch(fetchUserProfile(currentUser));
             } else {
                 dispatch(setUser(null));
             }

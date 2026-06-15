@@ -13,14 +13,20 @@ function Contries() {
     useEffect(() => {
         const detectCountry = async () => {
             try {
-                const response = await fetch('https://ipapi.co/json/');
+                // Using ipwho.is - it has better CORS support for free tier
+                const response = await fetch('https://ipwho.is/');
                 const data = await response.json();
                 
-                // data.country_code will return 'MA' for Morocco or 'FR' for France
-                const matched = countries.find(c => c.code === data.country);
-                if (matched) setSelectedCountry(matched);
+                if (data && data.country_code) {
+                    // Note: ipwho.is uses 'country_code', ipapi used 'country'
+                    const matched = countries.find(c => c.code === data.country_code);
+                    if (matched) {
+                        setSelectedCountry(matched);
+                    }
+                }
             } catch (error) {
                 console.error("Location detection failed:", error);
+                // Fallback is already handled by the default state (France)
             }
         };
         detectCountry();
