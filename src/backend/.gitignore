@@ -24,3 +24,17 @@ TestResults.xml
 
 .venv/
 venv
+
+# Local SQLite database
+legalease.db
+serviceAccountKey.json
+
+# RAG vector store + uploads
+chroma_db/
+uploads/
+
+__pycache__/
+*.pyc
+.env
+chroma_db/
+uploads/
