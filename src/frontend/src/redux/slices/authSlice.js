@@ -52,32 +52,32 @@ export const fetchUserProfile = createAsyncThunk(
 );
 
 // Fetch the subscription profile (plan + remaining free analyses).
-export const fetchUserProfile = createAsyncThunk(
-  'auth/fetchUserProfile',
-  async (firebaseUser, { rejectWithValue }) => {
-    try {
-      const token = await firebaseUser.getIdToken();
-      const response = await fetch(`${BACKEND_URL}/api/user/profile`, {
-        method: "GET",
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+// export const fetchUserProfile = createAsyncThunk(
+//   'auth/fetchUserProfile',
+//   async (firebaseUser, { rejectWithValue }) => {
+//     try {
+//       const token = await firebaseUser.getIdToken();
+//       const response = await fetch(`${BACKEND_URL}/api/user/profile`, {
+//         method: "GET",
+//         headers: { "Authorization": `Bearer ${token}` }
+//       });
 
-      if (!response.ok) throw new Error("Failed fetching profile.");
-      const data = await response.json();
+//       if (!response.ok) throw new Error("Failed fetching profile.");
+//       const data = await response.json();
 
-      return {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        displayName: firebaseUser.displayName,
-        photoURL: firebaseUser.photoURL,
-        plan: data.subscription_plan, // matches your FastAPI return key
-        token: token
-      };
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
+//       return {
+//         uid: firebaseUser.uid,
+//         email: firebaseUser.email,
+//         displayName: firebaseUser.displayName,
+//         photoURL: firebaseUser.photoURL,
+//         plan: data.subscription_plan, // matches your FastAPI return key
+//         token: token
+//       };
+//     } catch (error) {
+//       return rejectWithValue(error.message);
+//     }
+//   }
+// );
 
 // Upgrade the user to the paid plan (called after payment, or to test).
 export const upgradeToPro = createAsyncThunk(
@@ -137,8 +137,6 @@ const authSlice = createSlice({
       })
       .addCase(fetchUserProfile.fulfilled, (state, action) => {
         state.user = action.payload; // This updates the state with the plan!
-      })
-      .addCase(fetchUserProfile.fulfilled, (state, action) => {
         state.profile = action.payload;
       })
       .addCase(upgradeToPro.fulfilled, (state) => {
