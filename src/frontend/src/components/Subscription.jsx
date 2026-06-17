@@ -78,7 +78,6 @@ export const Subscription = () => {
             })
             .then((data) => {
                 console.log("✅ Backend updated successfully:", data);
-                alert("🎉 Thank you! Your account has been updated to Subscribed status.");
                 
                 const destinationId = user.user_id || user.id || 'dashboard';
                 navigate(`/conversation/${destinationId}`, { replace: true });
