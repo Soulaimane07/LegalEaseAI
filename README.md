@@ -124,5 +124,5 @@ Le projet repose sur une architecture moderne assurant sécurité et scalabilit�
 
 
 ## 🔗 Documents & Ressources
-- 🎥 **Vidéo de présentation (Pitch & Demo) :** [Regarder sur Google Drive](https://drive.google.com/file/d/1KJtcU21BBwLQDNXfzTdi9M_dP90Jg88F/view?usp=sharing)
+- 🎥 **Vidéo de présentation (Pitch & Demo) :** [Regarder sur Google Drive](https://drive.google.com/file/d/1AmKRkhZp4tnRnEfQTR_BlQkpRgDQmJVT/view?usp=sharing)
 - 📄 **Business Plan :** [Consulter le document PDF](/docs/BusinessPlan.pdf)
